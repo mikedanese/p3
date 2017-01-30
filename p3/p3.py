@@ -9,6 +9,8 @@ import p3.state
 import p3.state_manager
 import p3.stats
 
+import tensorflow as tf
+
 
 def find_dolphin_dir():
     """Attempts to find the dolphin user directory. None on failure."""
@@ -30,22 +32,24 @@ def write_locations(dolphin_dir, locations):
             print('Could not detect dolphin directory.')
             return
 
-def run(fox, state, sm, mw, pad, stats):
+def run(state, sm, mw, pad, stats):
     mm = p3.menu_manager.MenuManager()
-    while True:
-        last_frame = state.frame
-        res = next(mw)
-        if res is not None:
-            sm.handle(*res)
-        if state.frame > last_frame:
-            stats.add_frames(state.frame - last_frame)
-            start = time.time()
-            make_action(state, pad, mm, fox)
-            stats.add_thinking_time(time.time() - start)
+    fox = p3.fox.Fox(pad)
+    with tf.Session() as sess:
+        while True:
+            last_frame = state.frame
+            res = next(mw)
+            if res is not None:
+                sm.handle(*res)
+            if state.frame > last_frame:
+                stats.add_frames(state.frame - last_frame)
+                start = time.time()
+                make_action(state, pad, mm, fox, sess)
+                stats.add_thinking_time(time.time() - start)
 
-def make_action(state, pad, mm, fox):
+def make_action(state, pad, mm, fox, sess):
     if state.menu == p3.state.Menu.Game:
-        fox.advance(state, pad)
+        fox.advance(sess, state)
     elif state.menu == p3.state.Menu.Characters:
         mm.pick_fox(state, pad)
     elif state.menu == p3.state.Menu.Stages:
@@ -66,14 +70,12 @@ def main():
 
     stats = p3.stats.Stats()
 
-    fox = p3.fox.Fox()
-
     try:
         print('Start dolphin now. Press ^C to stop p3.')
         pad_path = dolphin_dir + '/Pipes/p3'
         mw_path = dolphin_dir + '/MemoryWatcher/MemoryWatcher'
         with p3.pad.Pad(pad_path) as pad, p3.memory_watcher.MemoryWatcher(mw_path) as mw:
-            run(fox, state, sm, mw, pad, stats)
+            run(state, sm, mw, pad, stats)
     except KeyboardInterrupt:
         print('Stopped')
         print(stats)

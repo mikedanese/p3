@@ -8,13 +8,13 @@ class Button(enum.Enum):
     X = 2
     Y = 3
     Z = 4
-    START = 5
-    L = 6
-    R = 7
-    D_UP = 8
-    D_DOWN = 9
-    D_LEFT = 10
-    D_RIGHT = 11
+    L = 5
+    R = 6
+    D_UP = 7
+    D_DOWN = 8
+    D_LEFT = 9
+    D_RIGHT = 10
+    START = 11
 
 @enum.unique
 class Trigger(enum.Enum):
